@@ -1,7 +1,7 @@
 import BracketMatch from './BracketMatch'
 import { getRoundName } from '../utils/tournament'
 
-export default function Knockout({ rounds, onWinner, champion }) {
+export default function Knockout({ rounds, onWinner, champion, onReset }) {
   const currentRoundIdx = rounds.findIndex(r => r.some(m => !m.winner))
   const currentRound = currentRoundIdx === -1 ? rounds[rounds.length - 1] : rounds[currentRoundIdx]
   const totalPlayers = rounds[0].length * 2
@@ -13,7 +13,7 @@ export default function Knockout({ rounds, onWinner, champion }) {
         <h2>¡Campeón del Torneo!</h2>
         <div className="champion-name">{champion}</div>
         <p className="champion-sub">Ha conquistado el torneo tras {rounds.length} rondas de eliminatoria</p>
-        <button className="btn-restart" onClick={() => window.location.reload()}>
+        <button className="btn-restart" onClick={onReset}>
           Nuevo Torneo
         </button>
       </div>

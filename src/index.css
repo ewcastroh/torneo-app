@@ -64,10 +64,34 @@ body {
   font-size: 0.8rem;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .phase-pills {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.btn-reset {
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.4);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.btn-reset:hover {
+  background: rgba(220,38,38,0.6);
+  border-color: transparent;
 }
 
 .phase-pill {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import PlayerInput from './components/PlayerInput'
 import GroupStage from './components/GroupStage'
 import Repechaje from './components/Repechaje'
@@ -6,14 +6,36 @@ import Knockout from './components/Knockout'
 import { createGroups, computeGroupStandings, createBracket, advanceBracket } from './utils/tournament'
 
 const PHASES = ['input', 'groups', 'repechaje', 'knockout']
+const STORAGE_KEY = 'torneo-state'
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? JSON.parse(saved) : null
+  } catch {
+    return null
+  }
+}
+
+function resetState() {
+  localStorage.removeItem(STORAGE_KEY)
+}
 
 export default function App() {
-  const [phase, setPhase] = useState('input')
-  const [config, setConfig] = useState(null)
-  const [groups, setGroups] = useState([])
-  const [repechajeRounds, setRepechajeRounds] = useState([])
-  const [knockoutRounds, setKnockoutRounds] = useState([])
-  const [champion, setChampion] = useState(null)
+  const saved = loadState()
+
+  const [phase, setPhase] = useState(saved?.phase || 'input')
+  const [config, setConfig] = useState(saved?.config || null)
+  const [groups, setGroups] = useState(saved?.groups || [])
+  const [repechajeRounds, setRepechajeRounds] = useState(saved?.repechajeRounds || [])
+  const [knockoutRounds, setKnockoutRounds] = useState(saved?.knockoutRounds || [])
+  const [champion, setChampion] = useState(saved?.champion || null)
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      phase, config, groups, repechajeRounds, knockoutRounds, champion,
+    }))
+  }, [phase, config, groups, repechajeRounds, knockoutRounds, champion])
 
   function handleStart({ players, sport, tournamentName }) {
     const g = createGroups(players)
@@ -44,9 +66,8 @@ export default function App() {
     })
     const firstRound = createBracket(repechaje, 'rep')
     setRepechajeRounds([firstRound])
-    setPhase('repechaje')
-    // store direct qualifiers for knockout
     setConfig(prev => ({ ...prev, directQualifiers: direct }))
+    setPhase('repechaje')
   }
 
   function handleRepechajeMatch(matchId, winner) {
@@ -63,7 +84,6 @@ export default function App() {
   }
 
   function handleRepechajeAdvance() {
-    // Only the 16 direct group qualifiers advance to the main knockout
     const firstRound = createBracket(config.directQualifiers, 'k')
     setKnockoutRounds([firstRound])
     setPhase('knockout')
@@ -87,6 +107,11 @@ export default function App() {
     })
   }
 
+  function handleReset() {
+    resetState()
+    window.location.reload()
+  }
+
   const phaseLabels = {
     groups: 'Fase de Grupos',
     repechaje: 'Repechaje',
@@ -103,20 +128,27 @@ export default function App() {
             {config?.sport && <span className="sport-tag">{config.sport}</span>}
           </div>
         </div>
-        {phase !== 'input' && (
-          <div className="phase-pills">
-            {['groups', 'repechaje', 'knockout'].map(p => (
-              <span
-                key={p}
-                className={`phase-pill ${phase === p ? 'pill-active' : ''} ${
-                  PHASES.indexOf(p) < PHASES.indexOf(phase) ? 'pill-done' : ''
-                }`}
-              >
-                {phaseLabels[p]}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="header-right">
+          {phase !== 'input' && (
+            <div className="phase-pills">
+              {['groups', 'repechaje', 'knockout'].map(p => (
+                <span
+                  key={p}
+                  className={`phase-pill ${phase === p ? 'pill-active' : ''} ${
+                    PHASES.indexOf(p) < PHASES.indexOf(phase) ? 'pill-done' : ''
+                  }`}
+                >
+                  {phaseLabels[p]}
+                </span>
+              ))}
+            </div>
+          )}
+          {phase !== 'input' && (
+            <button className="btn-reset" onClick={handleReset} title="Nuevo torneo">
+              ✕ Nuevo torneo
+            </button>
+          )}
+        </div>
       </header>
 
       <main className="app-main">
@@ -144,6 +176,7 @@ export default function App() {
             rounds={knockoutRounds}
             onWinner={handleKnockoutMatch}
             champion={champion}
+            onReset={handleReset}
           />
         )}
       </main>
